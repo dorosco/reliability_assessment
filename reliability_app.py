@@ -437,8 +437,8 @@ def update_summary(state):
                                 has_cur, state.has_base)
     state.df_cmp = build_cmp(state.df_res, state.base_res) if state.has_base \
         else pd.DataFrame(columns=CMP_COLS)
-    state.scenario_msg = ("Baseline stored. Modified elements are outlined in orange."
-                          if state.has_base else "No baseline stored.")
+    state.scenario_msg = ("Linea Base almacenada. Elementos modificados están resaltados en naranja."
+                          if state.has_base else "Linea Base no almacenada.")
 
 
 def on_init(state):
@@ -518,7 +518,7 @@ def load_nodes(state):
     try:
         state.df_nodes = _read_nodes(state.nodes_file)
     except Exception as e:
-        notify(state, "error", f"Could not read nodes CSV: {e}")
+        notify(state, "error", f"No se pudo leer el archivo CSV de nodos: {e}")
         return
     _reset_scenarios(state)
 
@@ -527,7 +527,7 @@ def load_edges(state):
     try:
         state.df_edges = _read_edges(state.edges_file)
     except Exception as e:
-        notify(state, "error", f"Could not read edges CSV: {e}")
+        notify(state, "error", f"No se pudo leer el archivo CSV de enlaces: {e}")
         return
     _reset_scenarios(state)
 
@@ -570,14 +570,14 @@ def _update_ui_with_results(state, out):
         
     update_summary(state)
     refresh(state)
-    notify(state, "success", "Reliability analysis completed")
+    notify(state, "success", "Análisis de confiabilidad completado")
 
 
 def _on_run_finished(state, status, *args):
     #print(f"DEBUG: status={status}, type_results={type(results)}, len_results={len(results)}, results={results}")
     if status is False:                       # exception inside _compute
         state.idle = True
-        notify(state, "error", "The reliability analysis failed. Check the console.")
+        notify(state, "error", "El análisis de confiabilidad falló. Verifique la consola.")
         return
     if status is not True:                    # periodic call while running
         return
@@ -596,7 +596,7 @@ def _on_run_finished(state, status, *args):
     #    notify(state, "warning", m)
     #update_summary(state)
     #refresh(state)
-    #notify(state, "success", "Reliability analysis completed")
+    #notify(state, "success", "Análisis de confiabilidad completado")
 
 
 def run_model(state):
@@ -608,7 +608,7 @@ def run_model(state):
             notify(state, "error", e)
         return
     state.idle = False
-    notify(state, "info", "Running reliability analysis...")
+    notify(state, "info", "Ejecutando análisis de confiabilidad...")
 
     state_id = get_state_id(state)
 
@@ -620,10 +620,10 @@ def run_model(state):
 # ---- scenario management ----------------------------------------------------------
 def set_baseline(state):
     if state.df_res.empty:
-        notify(state, "warning", "Run the analysis first.")
+        notify(state, "warning", "Corra el análisis primero.")
         return
     if state.stale:
-        notify(state, "warning", "Results are outdated. Run the analysis again before storing a baseline.")
+        notify(state, "warning", "Los resultados están desactualizados. Ejecute el análisis de nuevo antes de almacenar una línea base.")
         return
     state.base_nodes, state.base_edges = state.df_nodes.copy(), state.df_edges.copy()
     state.base_res = state.df_res.copy()
@@ -631,7 +631,7 @@ def set_baseline(state):
     state.has_base = True
     update_summary(state)
     refresh(state)
-    notify(state, "success", "Baseline stored. Edit parameters and run again to compare.")
+    notify(state, "success", "Línea Base almacenada. Edite los parámetros y ejecute nuevamente para comparar.")
 
 
 def restore_baseline(state):
@@ -657,7 +657,7 @@ def clear_baseline(state):
 # 5. Page
 # =============================================================================
 page = """
-# Distribution Network Reliability
+# Confiabilidad de Redes MT Radiales
 
 <|part|render={demo_mode}|
 **Demo model in use**: `reliability.py` was not found, so a placeholder calculation is running.
@@ -669,13 +669,13 @@ page = """
 <|{nodes_file}|file_selector|label=Load nodes CSV|extensions=.csv|on_action=load_nodes|>
 <|{edges_file}|file_selector|label=Load edges CSV|extensions=.csv|on_action=load_edges|>
 
-### Nodes
+### Nodos
 <|{df_nodes}|table|editable|selected={sel_nodes}|on_edit=node_edit|on_add=node_add|on_delete=node_delete|height=230px|width=100%|>
 
-### Edges
+### Enlaces
 <|{df_edges}|table|editable|selected={sel_edges}|on_edit=edge_edit|on_add=edge_add|on_delete=edge_delete|height=300px|width=100%|>
 
-### Scenario
+### Escenarios
 <|Run analysis|button|on_action=run_model|active={idle}|>
 <|Set current as baseline|button|on_action=set_baseline|active={idle}|>
 <|Restore baseline inputs|button|on_action=restore_baseline|active={has_base}|>
@@ -696,17 +696,17 @@ page = """
 |>
 
 <|part|render={stale}|
-**Parameters changed since the last run. The results shown are outdated.**
+**Parámetros cambiaron desde la última ejecución. Los resultados mostrados están desactualizados.**
 |>
 
 <|chart|figure={fig}|height=620px|>
 
 <|part|render={has_base}|
-### Baseline vs current (sorted by largest change in D_total)
+### Línea Base vs Actual (ordenado por el mayor cambio en D_total)
 <|{df_cmp}|table|height=250px|width=100%|>
 |>
 
-### Results per node
+### Resultados por nodo
 <|{df_res}|table|height=250px|width=100%|>
 |>
 |>
